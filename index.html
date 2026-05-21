@@ -238,7 +238,7 @@ document.querySelector('button.reset').addEventListener('click', reset);
 let woff2DecoderPromise = null;
 function loadWoff2Decoder() {
   if (!woff2DecoderPromise) {
-    woff2DecoderPromise = import('https://cdn.jsdelivr.net/npm/wawoff2@2.0.1/+esm');
+    woff2DecoderPromise = import('https://esm.sh/wawoff2@2.0.1');
   }
   return woff2DecoderPromise;
 }
