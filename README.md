@@ -2,7 +2,7 @@
 
 A single-file browser tool for catching the kinds of font problems that bite WordPress themes: fonts that *claim* coverage they don't actually deliver, missing punctuation that `wptexturize()` will synthesize anyway, and patchy diacritic support for the languages your theme is supposed to serve.
 
-Drop a `.ttf`, `.otf`, or `.woff` file in. Get a visual preview and a checklist of findings.
+Drop a `.ttf`, `.otf`, `.woff`, or `.woff2` file in. Get a visual preview and a checklist of findings.
 
 ## Why this exists
 
@@ -12,11 +12,11 @@ CSS fallback only triggers when a font says "I don't have this codepoint." A fon
 
 ## Usage
 
-1. Open `font-audit.html` in any modern browser (double-click or `open font-audit.html`).
+1. Open `index.html` in any modern browser (double-click or `open index.html`).
 2. Drop a font file onto the page, or click to pick one.
 3. Read the report.
 
-No server, no install. Works offline once `opentype.js` is in the browser cache.
+No server, no install. Works offline once the upstream libraries are in the browser cache.
 
 ## What it checks
 
@@ -39,10 +39,9 @@ Hover any tile to see its codepoint.
 
 ## Limitations
 
-- **WOFF2 isn't supported.** The in-browser parser can't decompress WOFF2. Convert to TTF or OTF first (e.g. with `woff2_decompress` from [google/woff2](https://github.com/google/woff2), or any online converter).
 - **BMP only** (codepoints U+0000–U+FFFF). Supplementary planes aren't scanned — fine for theme font auditing, not for emoji-only fonts.
-- **`opentype.js` loads from jsDelivr** on first open. Cached afterward.
+- **Upstream libraries load from jsDelivr** on first open: `opentype.js` for parsing, and `wawoff2` (a WASM Brotli decoder) lazily when a WOFF2 file is dropped. Both cache after the first load.
 
 ## Credits
 
-Built with [opentype.js](https://github.com/opentypejs/opentype.js).
+Built with [opentype.js](https://github.com/opentypejs/opentype.js) and [wawoff2](https://github.com/fontello/wawoff2).

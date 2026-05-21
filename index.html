@@ -123,7 +123,7 @@
 
   <label id="drop">
     <div class="big">Drop a font file here</div>
-    <div class="small">.ttf · .otf · .woff &nbsp; (WOFF2 must be converted to TTF/OTF first)</div>
+    <div class="small">.ttf · .otf · .woff · .woff2</div>
     <input type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff">
   </label>
 
@@ -235,15 +235,38 @@ drop.addEventListener('drop', (e) => {
 });
 document.querySelector('button.reset').addEventListener('click', reset);
 
+let woff2DecoderPromise = null;
+function loadWoff2Decoder() {
+  if (!woff2DecoderPromise) {
+    woff2DecoderPromise = import('https://cdn.jsdelivr.net/npm/wawoff2@2.0.1/+esm');
+  }
+  return woff2DecoderPromise;
+}
+
 async function handleFile(file) {
   errBox.hidden = true;
-  const bytes = await file.arrayBuffer();
+  let bytes = await file.arrayBuffer();
 
   const fmt = detectFormat(bytes);
   if (fmt === 'WOFF2') {
-    showError('WOFF2 files aren’t supported by the in-browser parser. Convert to TTF/OTF first ' +
-      '(e.g. with <code>woff2_decompress</code> from google/woff2, or any online converter).');
-    return;
+    const bigLabel = drop.querySelector('.big');
+    const originalLabel = bigLabel.textContent;
+    bigLabel.textContent = 'Decompressing WOFF2…';
+    try {
+      const mod = await loadWoff2Decoder();
+      const decompress = mod.decompress || (mod.default && mod.default.decompress);
+      if (!decompress) throw new Error('wawoff2 decompress function not found in module');
+      const decompressed = await decompress(new Uint8Array(bytes));
+      bytes = decompressed.buffer.slice(
+        decompressed.byteOffset,
+        decompressed.byteOffset + decompressed.byteLength
+      );
+    } catch (err) {
+      bigLabel.textContent = originalLabel;
+      showError('Failed to decompress WOFF2: ' + escapeHtml(err.message || String(err)));
+      return;
+    }
+    bigLabel.textContent = originalLabel;
   }
 
   let font;
