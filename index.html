@@ -103,7 +103,16 @@
   dl.meta dd { margin: 0; font-size: 14px; word-break: break-word; }
 
   .codepoint-list { font-family: ui-monospace, Menlo, monospace; font-size: 13px;
-    color: #444; margin-top: 8px; line-height: 1.7; }
+    color: #444; margin-top: 8px; line-height: 1.9; }
+  .cp-chip { display: inline-flex; align-items: center; gap: 6px;
+    background: #f7f7f4; border: 1px solid #e5e5e0; border-radius: 4px;
+    padding: 1px 8px 1px 1px; margin-right: 4px; vertical-align: middle; }
+  .cp-glyph { display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 20px; padding: 0 4px;
+    background: white; border-radius: 3px; border: 1px solid #e5e5e0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    font-size: 14px; color: #1a1a1a; }
+  .cp-more { color: var(--muted); margin-left: 4px; }
 
   button.reset { background: white; border: 1px solid var(--border); border-radius: 6px;
     padding: 8px 16px; cursor: pointer; margin-top: 24px; font-size: 14px; font-family: inherit; }
@@ -210,8 +219,15 @@ const COMMON_DIACRITICS = {
 };
 
 const INTENTIONALLY_EMPTY = new Set([
-  0x20, 0xA0, 0x09, 0x0A, 0x0D, 0x200B, 0x200C, 0x200D,
-  0x2028, 0x2029, 0xFEFF, 0x202F, 0x205F, 0x3000,
+  0x09, 0x0A, 0x0D,                     // tab, LF, CR
+  0x20, 0xA0, 0xAD,                     // space, NBSP, soft hyphen
+  0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
+  0x2008, 0x2009, 0x200A,               // typographic spaces (en/em/thin/hair/etc)
+  0x200B, 0x200C, 0x200D, 0x200E, 0x200F, // zero-width chars + LRM/RLM
+  0x2028, 0x2029,                       // line / paragraph separator
+  0x202A, 0x202B, 0x202C, 0x202D, 0x202E, // bidi marks
+  0x202F, 0x205F, 0x2060,               // narrow nbsp, medium math space, word joiner
+  0xFEFF, 0x3000,                       // BOM, ideographic space
 ]);
 
 let currentFontFace = null;
@@ -329,7 +345,7 @@ function audit(font, file, bytes) {
     issues.push({
       level: wpHit.length > 0 ? 'critical' : 'warning',
       title: `${emptyClaimed.length} codepoint${emptyClaimed.length === 1 ? '' : 's'} claimed by cmap but rendered as empty glyph${emptyClaimed.length === 1 ? '' : 's'}`,
-      detail: `The font’s <code>cmap</code> table advertises these codepoints, but the glyph data is empty. Browsers reserve advance width and draw nothing — and CSS fallback won’t kick in because the font claims the glyph exists. <strong>This is the Elite Math New trap.</strong>` +
+      detail: `The font’s <code>cmap</code> table advertises these codepoints, but the glyph data is empty. Browsers reserve advance width and draw nothing — and CSS fallback won’t kick in because the font claims the glyph exists.` +
         (wpHit.length > 0
           ? ` <span style="color:var(--critical)"><strong>${wpHit.length} of these are wptexturize codepoints — WordPress will synthesize them from ASCII customer content, so the bug will hit posts even if the customer never typed those characters.</strong></span>`
           : ''),
@@ -539,9 +555,11 @@ function detectFormat(bytes) {
 function formatCodepointList(list, limit) {
   const head = list.slice(0, limit).map(g => {
     const hex = 'U+' + g.cp.toString(16).toUpperCase().padStart(4, '0');
-    return g.name ? `${hex} (${g.name})` : hex;
-  }).join(' · ');
-  const rest = list.length > limit ? ` · …and ${list.length - limit} more` : '';
+    const ch = String.fromCodePoint(g.cp);
+    const meaningfulName = g.name && !/^uni[0-9A-Fa-f]+$/.test(g.name) ? ` (${g.name})` : '';
+    return `<span class="cp-chip"><span class="cp-glyph">${escapeHtml(ch)}</span>${hex}${meaningfulName}</span>`;
+  }).join(' ');
+  const rest = list.length > limit ? ` <span class="cp-more">…and ${list.length - limit} more</span>` : '';
   return head + rest;
 }
 
