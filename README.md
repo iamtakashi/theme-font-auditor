@@ -29,13 +29,21 @@ No server, no install. Works offline once the upstream libraries are in the brow
 
 ## Visual preview
 
-Five test lines, rendered in the loaded font with a serif fallback, plus a per-character coverage strip under each line:
+Five baked-in test lines (smart quotes & contractions, Western European diacritics, Central / Eastern European diacritics, punctuation & symbols, numerals & ASCII Latin) plus a sixth **custom-text** field where you can type or paste your own content. Each line is rendered in the loaded font with a serif fallback, and a per-character coverage strip beneath color-codes every character:
 
 - 🟢 green — character has an outline
 - 🔴 red — character is claimed by `cmap` but renders empty (the trap)
 - 🟡 yellow — character isn't in the font and will fall back
 
-Hover any tile to see its codepoint.
+Hover any tile for its codepoint. The custom-text input persists in `localStorage`, so the same test string carries across font reloads — useful when comparing candidate fonts against a single piece of client copy.
+
+## Coverage by Unicode block
+
+A heatmap of the 34 theme-relevant Unicode blocks the font touches — Latin variants, IPA, combining marks, Greek, Cyrillic, Armenian, Hebrew, Arabic, Devanagari, Bengali, Thai, Latin Extended Additional (where Vietnamese lives), Greek Extended, punctuation, currency, symbols, CJK ideographs, hiragana, katakana, hangul, and others.
+
+Each block the font covers becomes a tile colored by coverage percentage (90%+ full, 50–89% most, 10–49% partial, under 10% sparse). Tiles are grouped by tier so strengths surface first, with Unicode order preserved inside each tier to keep related scripts clustered. Blocks with fewer than three outlined glyphs are filtered out to suppress accidental single-codepoint hits.
+
+The heatmap answers the question a designer is usually actually asking: *what is this font good at, and where does it stop?*
 
 ## Limitations
 
