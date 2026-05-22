@@ -456,6 +456,8 @@ function audit(font, file, bytes) {
     `<span class="badge warning">${warning} warning</span>` +
     `<span class="badge info">${info} info</span>`;
 
+  const LEVEL_ORDER = { ok: 0, critical: 1, warning: 2, info: 3 };
+  issues.sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
   document.getElementById('issues').innerHTML = issues.map(renderIssue).join('');
 
   const outlined = countOutlinedGlyphs(font);
