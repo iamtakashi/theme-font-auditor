@@ -53,3 +53,9 @@ The heatmap answers the question a designer is usually actually asking: *what is
 ## Credits
 
 Built with [opentype.js](https://github.com/opentypejs/opentype.js) and [wawoff2](https://github.com/fontello/wawoff2).
+
+## License
+
+GPL v2 or later — same license as WordPress, so this tool is safe to use, modify, and redistribute inside the WordPress ecosystem. See [`LICENSE`](./LICENSE) for the full text.
+
+Bundled dependencies remain under their own licenses (opentype.js: MIT, wawoff2: MIT), both of which are GPL-compatible.
