@@ -59,8 +59,7 @@
   .preview-line .label { display: block; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
   .preview-line .text { font-family: "audit-font", serif; font-size: 22px; line-height: 1.4; }
-  .preview-hint { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0eb;
-    font-size: 13px; color: var(--muted); }
+  .preview-hint { margin-bottom: 14px; font-size: 13px; color: var(--muted); }
 
   .cov-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
     padding-bottom: 16px; border-bottom: 1px solid #f0f0eb; font-size: 13px; color: var(--muted); }
@@ -74,7 +73,22 @@
     font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height: 1; }
   .cov-char { display: inline-flex; align-items: center; justify-content: center;
     min-width: 16px; height: 26px; padding: 0 2px; border-radius: 4px;
-    border: 1px solid transparent; cursor: help; }
+    border: 1px solid transparent; position: relative; cursor: default; }
+  .cov-char::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a; color: white;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px; padding: 4px 8px; border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.1s;
+    z-index: 10;
+  }
+  .cov-char:hover::after { opacity: 1; }
   .cov-char.ok { background: #e6f4ea; color: #1d5e2a; border-color: #d0e8d6; }
   .cov-char.empty { background: #fde8e8; color: var(--critical); border-color: var(--critical); font-weight: 600; }
   .cov-char.missing { background: #fdf2d8; color: var(--warning); border-color: #e5c97a; }
@@ -144,13 +158,13 @@
 
     <section class="report-section">
       <h2>Rendered preview</h2>
-      <div class="preview-box" id="preview"></div>
       <div class="preview-hint">
         The top line of each pair renders in the loaded font (with serif fallback) — this is what
-        a customer would see. The strip below it color-codes every character: green = has outline,
-        red = claimed by the font but empty (the Elite Math New trap, renders as a gap),
+        a customer would see. The strip below it color-codes every character:
+        green = has outline, red = claimed by the font but empty (renders as a gap),
         yellow = not in the font at all (falls back to serif). Hover any tile for its codepoint.
       </div>
+      <div class="preview-box" id="preview"></div>
     </section>
 
     <section class="report-section">
@@ -469,25 +483,25 @@ function audit(font, file, bytes) {
 function buildCoverageStrip(font, text) {
   return [...text].map(ch => {
     const cp = ch.codePointAt(0);
-    if (ch === ' ') return '<span class="cov-char space" title="space"></span>';
+    if (ch === ' ') return '<span class="cov-char space" data-tip="space"></span>';
     const hex = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
     const gi = font.charToGlyphIndex(ch);
     let status;
     let tip;
     if (gi === 0) {
       status = 'missing';
-      tip = `${hex} — not in font (falls back)`;
+      tip = `${hex} · not in font`;
     } else {
       const g = font.glyphs.get(gi);
       if (isEmptyGlyph(g)) {
         status = 'empty';
-        tip = `${hex} — claimed by cmap but empty glyph (bug)`;
+        tip = `${hex} · claimed but empty`;
       } else {
         status = 'ok';
-        tip = `${hex} — has outline`;
+        tip = `${hex} · has outline`;
       }
     }
-    return `<span class="cov-char ${status}" title="${escapeHtml(tip)}">${escapeHtml(ch)}</span>`;
+    return `<span class="cov-char ${status}" data-tip="${escapeHtml(tip)}">${escapeHtml(ch)}</span>`;
   }).join('');
 }
 
