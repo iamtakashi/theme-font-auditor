@@ -71,6 +71,22 @@
 
   .coverage { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 10px;
     font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height: 1; }
+
+  .preview-line.custom { padding-top: 18px; margin-top: 18px; border-top: 1px solid #f0f0eb; }
+  .custom-input {
+    display: block; width: 100%;
+    font-family: "audit-font", serif; font-size: 22px; line-height: 1.4;
+    padding: 6px 8px; margin-left: -8px;
+    background: transparent; color: inherit;
+    border: 1px dashed transparent; border-radius: 4px; outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .custom-input:hover { border-color: #e5e5e0; }
+  .custom-input:focus { border-color: var(--accent); background: #fafcff; }
+  .custom-input::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    font-size: 15px; color: var(--muted);
+  }
   .cov-char { display: inline-flex; align-items: center; justify-content: center;
     min-width: 16px; height: 26px; padding: 0 2px; border-radius: 4px;
     border: 1px solid transparent; position: relative; cursor: default; }
@@ -343,13 +359,29 @@ function audit(font, file, bytes) {
     <span class="cov-legend-item"><span class="cov-swatch empty"></span>claimed by cmap but empty (the bug)</span>
     <span class="cov-legend-item"><span class="cov-swatch missing"></span>not in font — falls back</span>
   </div>`;
+  const customText = localStorage.getItem('font-audit-custom-text') || '';
+  const customLine = `<div class="preview-line custom">
+       <span class="label">Your own text</span>
+       <input class="custom-input" type="text" autocomplete="off" spellcheck="false"
+              placeholder="Type or paste here to test specific characters…"
+              value="${escapeHtml(customText)}">
+       <div class="coverage" id="custom-coverage">${customText ? buildCoverageStrip(font, customText) : ''}</div>
+     </div>`;
   document.getElementById('preview').innerHTML = legend + PREVIEW_LINES.map(line =>
     `<div class="preview-line">
        <span class="label">${escapeHtml(line.label)}</span>
        <div class="text">${escapeHtml(line.text)}</div>
        <div class="coverage">${buildCoverageStrip(font, line.text)}</div>
      </div>`
-  ).join('');
+  ).join('') + customLine;
+
+  const customInput = document.querySelector('.custom-input');
+  const customCov = document.getElementById('custom-coverage');
+  customInput.addEventListener('input', () => {
+    const val = customInput.value;
+    localStorage.setItem('font-audit-custom-text', val);
+    customCov.innerHTML = val ? buildCoverageStrip(font, val) : '';
+  });
 
   const issues = [];
 
