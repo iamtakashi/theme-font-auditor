@@ -73,13 +73,16 @@
     font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height: 1; }
   .coverage:empty { display: none; }
 
-  .preview-line.custom { padding-top: 18px; margin-top: 18px; border-top: 1px solid #f0f0eb; }
   .custom-input {
     display: block; width: 100%;
     font-family: "audit-font", serif; font-size: 22px; line-height: 1.4;
-    padding: 0; background: transparent; color: inherit;
-    border: none;
+    padding: 6px 8px;
+    background: transparent; color: inherit;
+    border: 1px dashed #e0e0d8; border-radius: 4px; outline: none;
+    transition: border-color 0.15s, background 0.15s;
   }
+  .custom-input:hover { border-color: #b8b8b0; }
+  .custom-input:focus { border-color: var(--accent); background: #fafcff; }
   .custom-input::placeholder {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
     font-size: 15px; color: var(--muted);
