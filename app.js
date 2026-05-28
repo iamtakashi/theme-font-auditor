@@ -8,7 +8,7 @@ const PREVIEW_LINES = [
   { label: "Central / Eastern European diacritics",
     text: 'Łódź, Praha, Kraków, Bucureşti, İstanbul, Reykjavík.' },
   { label: "Punctuation & symbols",
-    text: 'em — dash, en – dash, ellipsis… © ® ™ ¶ § † ‡' },
+    text: 'em — dash, en – dash, ellipsis… © ® ™ ¶ § † ‡ ↗' },
   { label: "Numerals & ASCII Latin",
     text: 'The quick brown fox jumps over the lazy dog. 0123456789 !?@#$%&*()[]{}' },
 ];
