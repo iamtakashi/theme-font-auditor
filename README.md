@@ -21,6 +21,7 @@ No server, no install. Works offline once the upstream libraries are in the brow
 ## What it checks
 
 - **Empty cmap-claimed glyphs.** Walks the font's `cmap` and reports every codepoint that's claimed but has no outline. The big one.
+- **Degenerate outlines.** A glyph can have outline data and still be broken — a corrupted outline reduced to a stray fragment a fraction of the character's proper size. For every claimed letter and decimal digit, the ink bounding box is compared against the em size and advance width; glyphs whose drawing is implausibly small are flagged (critical if ASCII letters or digits are affected, since dates, prices, and phone numbers hit those constantly). Punctuation, combining marks, and modifier letters are exempt — they're legitimately small.
 - **`wptexturize()` codepoints.** Explicitly tests U+2018 / U+2019 / U+201C / U+201D / U+2013 / U+2014 / U+2026. WordPress synthesizes these from ASCII on every front-end render, so missing any one of them breaks customer content even when the customer never typed the character.
 - **Diacritic coverage by language group.** Samples representative codepoints for Western European, Polish, Czech / Slovak, Hungarian, Romanian, Turkish, Scandinavian, basic Cyrillic, and basic Greek. Reports partial vs. fully missing per group.
 - **Glyph integrity ratio.** Total glyphs vs. glyphs with outlines vs. cmap-claimed-but-empty. A font claiming hundreds of codepoints with only a handful actually drawn is a strong smell.
@@ -33,6 +34,7 @@ Five baked-in test lines (smart quotes & contractions, Western European diacriti
 
 - 🟢 green — character has an outline
 - 🔴 red — character is claimed by `cmap` but renders empty (the trap)
+- 🟠 orange — character has an outline but it's degenerate (renders as a speck)
 - 🟡 yellow — character isn't in the font and will fall back
 
 Hover any tile for its codepoint. The custom-text input persists in `localStorage`, so the same test string carries across font reloads — useful when comparing candidate fonts against a single piece of client copy.

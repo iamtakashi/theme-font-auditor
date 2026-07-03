@@ -60,6 +60,7 @@ h1.app-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em
 .cov-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid transparent; }
 .cov-swatch.ok { background: #e6f4ea; border-color: #b6dec0; }
 .cov-swatch.empty { background: #fde8e8; border-color: var(--critical); }
+.cov-swatch.degenerate { background: #fdeadb; border-color: #d9822b; }
 .cov-swatch.missing { background: #fdf2d8; border-color: #e5c97a; }
 
 .coverage { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 10px;
@@ -100,6 +101,7 @@ h1.app-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em
 .cov-char:hover::after { opacity: 1; }
 .cov-char.ok { background: #e6f4ea; color: #1d5e2a; border-color: #d0e8d6; }
 .cov-char.empty { background: #fde8e8; color: var(--critical); border-color: var(--critical); font-weight: 600; }
+.cov-char.degenerate { background: #fdeadb; color: #b35309; border-color: #d9822b; font-weight: 600; }
 .cov-char.missing { background: #fdf2d8; color: var(--warning); border-color: #e5c97a; }
 .cov-char.space { min-width: 8px; background: transparent; border-color: transparent; }
 
@@ -153,6 +155,7 @@ h1.app-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em
   background: #fafaf7; display: flex; flex-direction: column; align-items: center; gap: 4px;
   position: relative; min-height: 56px; }
 .glyph-tile.glyph-empty    { background: #fde8e8; border-color: #f5c6c6; }
+.glyph-tile.glyph-degenerate { background: #fdeadb; border-color: #eec9a3; }
 .glyph-tile.glyph-unmapped { background: #f1f1ed; border-color: #e0e0d8; opacity: 0.85; }
 .glyph-tile.glyph-notdef   { background: #e6efff; border-color: #c5d4ee; }
 .glyph-render { width: 28px; height: 28px; display: flex; align-items: center;
