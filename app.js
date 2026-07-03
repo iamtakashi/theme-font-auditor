@@ -83,6 +83,11 @@ const UNICODE_BLOCKS = [
   { name: "CJK Unified Ideographs",       start: 0x4E00, end: 0x9FFF },
 ];
 
+// Letters/digits whose glyphs are legitimately dot-sized, so the
+// degenerate-outline heuristic must skip them: Arabic-Indic zeros (٠ ۰),
+// Hangul araea (ㆍ), Canadian syllabics final middle dot (ᐧ), sinological dot (ꞏ).
+const SMALL_BY_DESIGN = new Set([0x0660, 0x06F0, 0x318D, 0x1427, 0xA78F]);
+
 const INTENTIONALLY_EMPTY = new Set([
   0x09, 0x0A, 0x0D,
   0x20, 0xA0, 0xAD,
@@ -192,6 +197,7 @@ function audit(font, file, bytes) {
   const legend = `<div class="cov-legend">
     <span class="cov-legend-item"><span class="cov-swatch ok"></span>has outline</span>
     <span class="cov-legend-item"><span class="cov-swatch empty"></span>claimed by cmap but empty (the bug)</span>
+    <span class="cov-legend-item"><span class="cov-swatch degenerate"></span>outline broken — renders as a speck</span>
     <span class="cov-legend-item"><span class="cov-swatch missing"></span>not in font — falls back</span>
   </div>`;
   const customText = localStorage.getItem('font-audit-custom-text') || '';
@@ -234,6 +240,20 @@ function audit(font, file, bytes) {
     });
   }
 
+  const degenerateClaimed = findDegenerateClaimedGlyphs(font);
+  if (degenerateClaimed.length > 0) {
+    const asciiHit = degenerateClaimed.filter(g => g.cp <= 0x7E);
+    issues.push({
+      level: asciiHit.length > 0 ? 'critical' : 'warning',
+      title: `${degenerateClaimed.length} letter/digit codepoint${degenerateClaimed.length === 1 ? '' : 's'} with degenerate outline${degenerateClaimed.length === 1 ? '' : 's'}`,
+      detail: `These glyphs have outline data, so they pass an emptiness check — but the drawing is a small fraction of the size a letter or digit should be, which almost always means a corrupted outline. Browsers reserve the full advance width and render a near-invisible speck, and CSS fallback won’t kick in because the font claims the glyph.` +
+        (asciiHit.length > 0
+          ? ` <span style="color:var(--critical)"><strong>${asciiHit.length} of these are ASCII letters or digits — dates, prices, and phone numbers in ordinary customer content will render with missing characters.</strong></span>`
+          : ''),
+      list: formatCodepointList(degenerateClaimed, 80),
+    });
+  }
+
   const wptexMissing = WPTEXTURIZE_CODEPOINTS.filter(w => !hasUsableGlyph(font, w.cp));
   if (wptexMissing.length > 0) {
     issues.push({
@@ -270,12 +290,13 @@ function audit(font, file, bytes) {
 
   const cmapClaimed = countCmapClaimed(font);
   if (cmapClaimed > 0) {
-    const ratio = emptyClaimed.length / cmapClaimed;
+    const unrenderable = emptyClaimed.length + degenerateClaimed.length;
+    const ratio = unrenderable / cmapClaimed;
     if (ratio > 0.3) {
       issues.push({
         level: 'critical',
-        title: `${Math.round(ratio * 100)}% of cmap-claimed codepoints are empty glyphs`,
-        detail: `The font claims ${cmapClaimed} codepoints but ${emptyClaimed.length} of them are unrenderable. Strong signal the font is fundamentally incomplete — its specimen sheet probably only shows the working glyphs. Treat with extreme caution.`,
+        title: `${Math.round(ratio * 100)}% of cmap-claimed codepoints are empty or degenerate glyphs`,
+        detail: `The font claims ${cmapClaimed} codepoints but ${unrenderable} of them are unrenderable. Strong signal the font is fundamentally incomplete — its specimen sheet probably only shows the working glyphs. Treat with extreme caution.`,
       });
     }
   }
@@ -314,7 +335,7 @@ function audit(font, file, bytes) {
     issues.unshift({
       level: 'ok',
       title: 'No critical or warning issues detected',
-      detail: 'No empty cmap-claimed glyphs, full wptexturize coverage, and at least partial diacritic coverage for the sampled languages. Still eyeball the rendered preview above for hinting, kerning, and weight quirks.',
+      detail: 'No empty cmap-claimed glyphs, no degenerate outlines, full wptexturize coverage, and at least partial diacritic coverage for the sampled languages. Still eyeball the rendered preview above for hinting, kerning, and weight quirks.',
     });
   }
 
@@ -341,6 +362,7 @@ function audit(font, file, bytes) {
     'Glyphs with outlines': `${outlined} (${Math.round(outlined / font.glyphs.length * 100)}%)`,
     'Codepoints in cmap': cmapClaimed,
     'Empty cmap-claimed glyphs': emptyClaimed.length,
+    'Degenerate cmap-claimed glyphs': degenerateClaimed.length,
     'Tables present': tables.sort().join(', ') || '—',
     'Copyright': (font.names.copyright && font.names.copyright.en) || '—',
   };
@@ -356,6 +378,7 @@ function audit(font, file, bytes) {
     `<strong>${font.glyphs.length}</strong> total glyphs — ` +
     `<strong>${browser.outlined}</strong> outlined, ` +
     `<strong>${browser.empty}</strong> claimed-but-empty, ` +
+    `<strong>${browser.degenerate}</strong> degenerate, ` +
     `<strong>${browser.unmapped}</strong> unmapped (reachable only via OpenType features).`;
 
   const glyphDetails = document.querySelector('.glyph-details');
@@ -429,7 +452,7 @@ function buildGlyphBrowser(font) {
     if (gi !== 0 && !giToCp.has(gi)) giToCp.set(gi, cp);
   }
 
-  let outlined = 0, empty = 0, unmapped = 0;
+  let outlined = 0, empty = 0, unmapped = 0, degenerate = 0;
   const tiles = [];
   for (let i = 0; i < font.glyphs.length; i++) {
     const glyph = font.glyphs.get(i);
@@ -441,6 +464,7 @@ function buildGlyphBrowser(font) {
     if (i === 0) status = 'notdef';
     else if (!hasCmap) { status = 'unmapped'; unmapped++; }
     else if (empty_)   { status = 'empty';    empty++; }
+    else if (isDegenerateGlyph(glyph, font, cp)) { status = 'degenerate'; degenerate++; }
     else               { status = 'ok';       outlined++; }
 
     const cpLabel = hasCmap ? 'U+' + cp.toString(16).toUpperCase().padStart(4, '0')
@@ -449,6 +473,7 @@ function buildGlyphBrowser(font) {
     const tipParts = [cpLabel];
     if (name) tipParts.push(name);
     if (status === 'empty') tipParts.push('claimed but empty');
+    else if (status === 'degenerate') tipParts.push('outline broken (degenerate)');
     else if (status === 'unmapped') tipParts.push('not in cmap');
     else if (status === 'notdef') tipParts.push('.notdef (fallback glyph)');
     const tip = tipParts.join(' · ');
@@ -459,7 +484,7 @@ function buildGlyphBrowser(font) {
     </div>`);
   }
 
-  return { html: tiles.join(''), outlined, empty, unmapped };
+  return { html: tiles.join(''), outlined, empty, unmapped, degenerate };
 }
 
 function buildCoverageStrip(font, text) {
@@ -478,6 +503,9 @@ function buildCoverageStrip(font, text) {
       if (isEmptyGlyph(g)) {
         status = 'empty';
         tip = `${hex} · claimed but empty`;
+      } else if (isDegenerateGlyph(g, font, cp)) {
+        status = 'degenerate';
+        tip = `${hex} · outline broken (degenerate)`;
       } else {
         status = 'ok';
         tip = `${hex} · has outline`;
@@ -504,6 +532,23 @@ function findEmptyClaimedGlyphs(font) {
   return result;
 }
 
+function findDegenerateClaimedGlyphs(font) {
+  const result = [];
+  const seenGlyph = new Set();
+  for (let cp = 0x20; cp <= 0xFFFF; cp++) {
+    if (INTENTIONALLY_EMPTY.has(cp)) continue;
+    const gi = font.charToGlyphIndex(String.fromCodePoint(cp));
+    if (gi === 0) continue;
+    if (seenGlyph.has(gi)) continue;
+    seenGlyph.add(gi);
+    const g = font.glyphs.get(gi);
+    if (isDegenerateGlyph(g, font, cp)) {
+      result.push({ cp, name: g.name || '' });
+    }
+  }
+  return result;
+}
+
 function isEmptyGlyph(glyph) {
   if (!glyph) return true;
   try {
@@ -514,10 +559,32 @@ function isEmptyGlyph(glyph) {
   return false;
 }
 
+// A glyph with outline data whose ink is a fraction of the size a letter or
+// digit should be — a stray fragment of a corrupted outline. Only letters and
+// decimal digits are held to this standard: punctuation, marks, and modifier
+// letters (superscripts, ʻokina, etc.) are legitimately small.
+function isDegenerateGlyph(glyph, font, cp) {
+  if (SMALL_BY_DESIGN.has(cp)) return false;
+  const ch = String.fromCodePoint(cp);
+  if (!/[\p{L}\p{Nd}]/u.test(ch) || /\p{Lm}/u.test(ch)) return false;
+  if (isEmptyGlyph(glyph)) return false;
+  let box;
+  try { box = glyph.getBoundingBox(); } catch (e) { return false; }
+  const em = font.unitsPerEm;
+  const w = box.x2 - box.x1;
+  const h = box.y2 - box.y1;
+  // max() of both dimensions, not height alone: bar-shaped letters
+  // (一 ㅡ ㄧ) are legitimately flat but wide.
+  if (Math.max(w, h) < em * 0.10) return true;
+  const advance = glyph.advanceWidth || em / 2;
+  return w * h < advance * em * 0.02;
+}
+
 function hasUsableGlyph(font, cp) {
   const gi = font.charToGlyphIndex(String.fromCodePoint(cp));
   if (gi === 0) return false;
-  return !isEmptyGlyph(font.glyphs.get(gi));
+  const g = font.glyphs.get(gi);
+  return !isEmptyGlyph(g) && !isDegenerateGlyph(g, font, cp);
 }
 
 function countCmapClaimed(font) {
