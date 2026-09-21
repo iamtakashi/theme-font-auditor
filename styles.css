@@ -14,7 +14,10 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
   font: 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
 main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
 h1.app-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--muted); font-weight: 600; margin: 0 0 32px; }
+  color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+.app-intro { max-width: 640px; margin: 0 0 32px; font-size: 15px; color: #333; }
+.app-intro code { font-family: ui-monospace, Menlo, monospace; font-size: 13px;
+  background: #f1f1ed; padding: 1px 5px; border-radius: 3px; }
 
 #drop {
   border: 2px dashed var(--border);
@@ -197,6 +200,12 @@ button.reset:hover { border-color: var(--accent); color: var(--accent); }
 details { margin-top: 8px; }
 details summary { cursor: pointer; font-size: 13px; color: var(--accent); user-select: none; }
 details[open] summary { margin-bottom: 6px; }
+
+.app-footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--muted); }
+.app-footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.app-footer a:hover { color: var(--accent); }
+.app-footer span { margin: 0 6px; }
 
 .err { background: #fde8e8; color: var(--critical); padding: 12px 16px;
   border-radius: 6px; margin: 16px 0; }
