@@ -50,7 +50,7 @@ The heatmap answers the question a designer is usually actually asking: *what is
 ## Limitations
 
 - **BMP only** (codepoints U+0000–U+FFFF). Supplementary planes aren't scanned — fine for theme font auditing, not for emoji-only fonts.
-- **Upstream libraries load from jsDelivr** on first open: `opentype.js` for parsing, and `wawoff2` (a WASM Brotli decoder) lazily when a WOFF2 file is dropped. Both cache after the first load.
+- **Upstream libraries load from CDNs:** `opentype.js` for parsing comes from jsDelivr on first open, and `wawoff2` (a WASM Brotli decoder) comes from esm.sh when you first drop a WOFF2 file. Both cache after the first load.
 
 ## Credits
 
